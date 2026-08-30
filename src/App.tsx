@@ -4,6 +4,7 @@ import { SidebarConfigProvider } from '@/contexts/sidebar-context'
 import { AppRouter } from '@/components/router/app-router'
 import { useEffect } from 'react'
 import { initGTM } from '@/utils/analytics'
+import { supabase } from "@/lib/supabase";
 
 // Get basename from environment (for deployment) or use empty string for development
 const basename = import.meta.env.VITE_BASENAME || ''
