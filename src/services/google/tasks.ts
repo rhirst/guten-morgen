@@ -1,4 +1,4 @@
-import { parseGoogleTaskDueDate } from "@/lib/google-dates";
+import { parseGoogleTaskDueDate, startOfLocalDay } from "@/lib/google-dates";
 import { googleFetch } from "./googleApi";
 import type {
   GoogleTask,
@@ -26,17 +26,21 @@ function normalizeTask(task: GoogleTask, taskListId: string): Task {
     notes: task.notes,
     due: task.due ? parseGoogleTaskDueDate(task.due) : undefined,
     completed: task.status === "completed",
+    completedAt: task.completed,
   };
 }
 
 export async function getTasks(taskList: GoogleTaskList): Promise<Task[]> {
   const items: GoogleTask[] = [];
   let pageToken: string | undefined;
+  // Include tasks completed today so they stay visible as crossed-off.
+  const completedMin = startOfLocalDay().toISOString();
 
   do {
     const params = new URLSearchParams({
-      showCompleted: "false",
-      showHidden: "false",
+      showCompleted: "true",
+      showHidden: "true",
+      completedMin,
       maxResults: "100",
     });
 
@@ -55,9 +59,10 @@ export async function getTasks(taskList: GoogleTaskList): Promise<Task[]> {
   return items.map((task) => normalizeTask(task, taskList.id));
 }
 
-export async function completeTask(
+export async function setTaskCompleted(
   taskListId: string,
-  taskId: string
+  taskId: string,
+  completed: boolean
 ): Promise<Task> {
   const response = await googleFetch<GoogleTask>(
     `${TASKS_API}/lists/${encodeURIComponent(taskListId)}/tasks/${encodeURIComponent(taskId)}`,
@@ -66,7 +71,11 @@ export async function completeTask(
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ status: "completed" }),
+      body: JSON.stringify(
+        completed
+          ? { status: "completed" }
+          : { status: "needsAction", completed: null }
+      ),
     }
   );
 

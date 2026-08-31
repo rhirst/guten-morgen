@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
-  completeTask as completeTaskRequest,
   getTaskLists,
   getTasks,
+  setTaskCompleted,
 } from "@/services/google/tasks";
 import type { GoogleTaskList, Task } from "@/services/google/tasks.types";
 import { useGoogleAuth } from "@/providers/GoogleAuthProvider";
@@ -56,27 +56,46 @@ export function useTasks(enabledTaskListIds?: string[] | null) {
     refresh();
   }, [refresh]);
 
-  const completeTask = useCallback(async (task: Task) => {
+  const toggleTaskCompleted = useCallback(async (task: Task) => {
+    const nextCompleted = !task.completed;
     let snapshot: Task[] = [];
 
     setTasks((current) => {
       snapshot = current;
-      return current.filter(
-        (item) =>
-          !(item.id === task.id && item.taskListId === task.taskListId)
-      );
+      return current.map((item) => {
+        if (item.id !== task.id || item.taskListId !== task.taskListId) {
+          return item;
+        }
+
+        return {
+          ...item,
+          completed: nextCompleted,
+          completedAt: nextCompleted ? new Date().toISOString() : undefined,
+        };
+      });
     });
 
     try {
-      await completeTaskRequest(task.taskListId, task.id);
+      const updated = await setTaskCompleted(
+        task.taskListId,
+        task.id,
+        nextCompleted
+      );
+      setTasks((current) =>
+        current.map((item) =>
+          item.id === updated.id && item.taskListId === updated.taskListId
+            ? updated
+            : item
+        )
+      );
     } catch (err) {
       setTasks(snapshot);
       const message =
-        err instanceof Error ? err.message : "Failed to complete task";
+        err instanceof Error ? err.message : "Failed to update task";
       setError(
         new Error(
           message.includes("403")
-            ? "Task completion needs updated Google permission. Disconnect and connect again."
+            ? "Task updates need updated Google permission. Disconnect and connect again."
             : message
         )
       );
@@ -99,6 +118,6 @@ export function useTasks(enabledTaskListIds?: string[] | null) {
     loading,
     error,
     refresh,
-    completeTask,
+    toggleTaskCompleted,
   };
 }

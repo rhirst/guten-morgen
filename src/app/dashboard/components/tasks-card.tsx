@@ -32,6 +32,10 @@ function formatDue(task: Task) {
 }
 
 function sortTasks(a: Task, b: Task) {
+  if (a.completed !== b.completed) {
+    return a.completed ? 1 : -1;
+  }
+
   if (a.due && b.due) {
     const dueCompare = a.due.localeCompare(b.due);
     if (dueCompare !== 0) {
@@ -52,16 +56,16 @@ export function TasksCard({
   loading,
   error,
   isAuthorized,
-  onCompleteTask,
+  onToggleTaskCompleted,
 }: {
   tasks: Task[];
   taskLists: GoogleTaskList[];
   loading: boolean;
   error: Error | null;
   isAuthorized: boolean;
-  onCompleteTask?: (task: Task) => Promise<void>;
+  onToggleTaskCompleted?: (task: Task) => Promise<void>;
 }) {
-  const [completingIds, setCompletingIds] = useState<Set<string>>(new Set());
+  const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
 
   const todaysTasks = useMemo(
     () => tasks.filter((task) => isTaskForToday(task)),
@@ -77,18 +81,18 @@ export function TasksCard({
     }));
   }, [taskLists, todaysTasks]);
 
-  async function handleComplete(task: Task) {
-    if (!onCompleteTask) {
+  async function handleToggle(task: Task) {
+    if (!onToggleTaskCompleted) {
       return;
     }
 
     const key = `${task.taskListId}:${task.id}`;
-    setCompletingIds((current) => new Set(current).add(key));
+    setTogglingIds((current) => new Set(current).add(key));
 
     try {
-      await onCompleteTask(task);
+      await onToggleTaskCompleted(task);
     } finally {
-      setCompletingIds((current) => {
+      setTogglingIds((current) => {
         const next = new Set(current);
         next.delete(key);
         return next;
@@ -104,7 +108,7 @@ export function TasksCard({
           Tasks
         </CardTitle>
         <CardDescription>
-          Open items due today, plus undated tasks — grouped by list
+          Due today and undated tasks — completed stay checked until you uncheck
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -139,21 +143,31 @@ export function TasksCard({
                   <ul className="space-y-3">
                     {listTasks.map((task) => {
                       const key = `${task.taskListId}:${task.id}`;
-                      const busy = completingIds.has(key);
+                      const busy = togglingIds.has(key);
 
                       return (
                         <li key={key} className="flex items-start gap-2.5">
                           <Checkbox
                             className="mt-0.5"
-                            checked={false}
-                            disabled={busy || !onCompleteTask}
+                            checked={task.completed}
+                            disabled={busy || !onToggleTaskCompleted}
                             onCheckedChange={() => {
-                              void handleComplete(task);
+                              void handleToggle(task);
                             }}
-                            aria-label={`Complete ${task.title}`}
+                            aria-label={
+                              task.completed
+                                ? `Mark ${task.title} incomplete`
+                                : `Complete ${task.title}`
+                            }
                           />
                           <div className="min-w-0">
-                            <p className="text-sm font-medium leading-tight">
+                            <p
+                              className={
+                                task.completed
+                                  ? "text-sm font-medium leading-tight text-muted-foreground line-through"
+                                  : "text-sm font-medium leading-tight"
+                              }
+                            >
                               {task.title}
                             </p>
                             <p className="text-xs text-muted-foreground">

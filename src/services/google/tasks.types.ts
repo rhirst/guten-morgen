@@ -32,4 +32,6 @@ export type GoogleTaskList = {
     due?: string | undefined;
   
     completed: boolean;
+    /** RFC 3339 completion timestamp from Google Tasks, when completed. */
+    completedAt?: string;
   };

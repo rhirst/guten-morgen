@@ -228,16 +228,6 @@ export function WeekAgenda({
                     {selected.description}
                   </p>
                 )}
-                {selected.htmlLink && (
-                  <a
-                    href={selected.htmlLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
-                  >
-                    Open in Google Calendar
-                  </a>
-                )}
               </div>
             </>
           )}

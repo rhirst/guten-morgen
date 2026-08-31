@@ -38,13 +38,11 @@ export default function Page() {
             <p className="text-sm text-muted-foreground">{dateLabel}</p>
             <h1 className="text-3xl font-bold tracking-tight">
               {greetingForHour(now.getHours())}
-              {name ? `, ${name}` : ""}
             </h1>
             <LiveClock clockFormat={settings?.clock_format ?? "12h"} />
           </div>
           <div className="flex w-full flex-col gap-4 sm:max-w-sm">
             <WeatherCard temperatureUnit={settings?.temperature_unit} />
-            <GoogleAuthorizationButton />
           </div>
         </div>
 
@@ -61,7 +59,7 @@ export default function Page() {
           loading={tasks.loading}
           error={tasks.error}
           isAuthorized={isAuthorized}
-          onCompleteTask={tasks.completeTask}
+          onToggleTaskCompleted={tasks.toggleTaskCompleted}
         />
       </div>
     </BaseLayout>
