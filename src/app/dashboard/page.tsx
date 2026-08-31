@@ -1,6 +1,4 @@
 import { BaseLayout } from "@/components/layouts/base-layout"
-import { GoogleAuthorizationButton } from "@/components/google/GoogleAuthorizationButton"
-import { useAuth } from "@/hooks/use-auth"
 import { useCalendar } from "@/hooks/useCalendar"
 import { useDashboardSettings } from "@/hooks/useDashboardSettings"
 import { useTasks } from "@/hooks/useTasks"
@@ -11,24 +9,18 @@ import { WeatherCard } from "@/app/dashboard/components/weather-card"
 import { WeekAgenda } from "@/app/dashboard/components/week-agenda"
 
 export default function Page() {
-  const { user } = useAuth()
   const { settings } = useDashboardSettings()
   const { isAuthorized } = useGoogleAuth()
   const calendar = useCalendar(settings?.enabled_calendar_ids)
   const tasks = useTasks(settings?.enabled_task_list_ids)
 
   const now = new Date()
-  const name =
-    user?.user_metadata?.full_name ??
-    user?.user_metadata?.name ??
-    user?.email?.split("@")[0] ??
-    ""
 
   const dateLabel = new Intl.DateTimeFormat(undefined, {
     weekday: "long",
     month: "long",
     day: "numeric",
-  }).format(now)
+  }).format(now)  
 
   return (
     <BaseLayout>

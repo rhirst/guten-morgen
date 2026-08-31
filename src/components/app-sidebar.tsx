@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { LayoutDashboard, Palette, Layers, HouseHeart } from "lucide-react"
+import { LayoutDashboard, Palette, Layers } from "lucide-react"
 import { Link } from "react-router-dom"
 import { Logo } from "@/components/logo"
 
@@ -49,7 +49,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton size="lg" asChild>
               <Link to="/dashboard">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <HouseHeart size={24} className="text-current" />
+                  <Logo size={24} className="text-current" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">Guten Morgen</span>
