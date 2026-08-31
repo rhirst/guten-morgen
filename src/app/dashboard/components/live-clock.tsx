@@ -6,7 +6,6 @@ function formatClock(date: Date, clockFormat: string) {
   return new Intl.DateTimeFormat(undefined, {
     hour: "numeric",
     minute: "2-digit",
-    second: "2-digit",
     hour12,
   }).format(date);
 }
@@ -20,7 +19,7 @@ export function LiveClock({ clockFormat }: { clockFormat: string }) {
   }, []);
 
   return (
-    <p className="text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl">
+    <p className="text-5xl font-semibold tabular-nums tracking-tight">
       {formatClock(now, clockFormat)}
     </p>
   );

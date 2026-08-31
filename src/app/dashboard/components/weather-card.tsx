@@ -13,7 +13,7 @@ export function WeatherCard({
 }: {
   temperatureUnit: string | undefined;
 }) {
-  const { weather, loading, error, permissionDenied } =
+  const { weather, loading, error } =
     useWeather(temperatureUnit);
 
   const unitLabel =
@@ -22,15 +22,15 @@ export function WeatherCard({
       : "°C";
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col items-start justify-start w-full">
         <CardTitle className="flex items-center gap-2 text-base">
           <CloudSun className="size-4" />
           Weather
         </CardTitle>
-        <CardDescription>Current conditions {permissionDenied ? "near Chicago" : "near you"}</CardDescription>
+        <CardDescription>Current conditions</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="w-full">
         {loading && (
           <p className="text-sm text-muted-foreground">Loading weather…</p>
         )}

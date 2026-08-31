@@ -3,7 +3,6 @@ import { CheckSquare } from "lucide-react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -128,15 +127,12 @@ export function TasksCard({
   }
 
   return (
-    <Card>
+    <Card className="gap-0 p-0 py-2">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
+        <CardTitle className="flex items-center gap-2 text-base ">
           <CheckSquare className="size-4" />
           Tasks
         </CardTitle>
-        <CardDescription>
-          Today, overdue, and undated — plus tasks completed since 4:00 AM
-        </CardDescription>
       </CardHeader>
       <CardContent>
         {!isAuthorized && (

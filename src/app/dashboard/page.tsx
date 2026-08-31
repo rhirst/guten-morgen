@@ -3,7 +3,7 @@ import { useCalendar } from "@/hooks/useCalendar"
 import { useDashboardSettings } from "@/hooks/useDashboardSettings"
 import { useTasks } from "@/hooks/useTasks"
 import { useGoogleAuth } from "@/providers/GoogleAuthProvider"
-import { greetingForHour, LiveClock } from "@/app/dashboard/components/live-clock"
+import { LiveClock } from "@/app/dashboard/components/live-clock"
 import { TasksCard } from "@/app/dashboard/components/tasks-card"
 import { WeatherCard } from "@/app/dashboard/components/weather-card"
 import { WeekAgenda } from "@/app/dashboard/components/week-agenda"
@@ -28,16 +28,13 @@ export default function Page() {
 
   return (
     <BaseLayout>
-      <div className="@container/main space-y-6 px-4 lg:px-6">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-2">
+      <div className="@container/main space-y-4 px-4">
+        <div className="flex flex-col gap-4 lg:flex-row items-center lg:justify-between">
+          <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <SidebarTrigger />
               <p className="text-sm text-muted-foreground">{dateLabel}</p>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              {greetingForHour(now.getHours())}
-            </h1>
             <LiveClock clockFormat={settings?.clock_format ?? "12h"} />
           </div>
           <div className="flex w-full flex-col gap-4 sm:max-w-sm">
