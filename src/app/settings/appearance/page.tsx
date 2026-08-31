@@ -117,7 +117,7 @@ export default function AppearanceSettings() {
                       <RadioGroup
                         onValueChange={field.onChange}
                         value={field.value}
-                        className="flex flex-col gap-3"
+                        className="flex flex-col gap-6"
                       >
                         <FormItem className="flex items-center gap-3">
                           <FormControl>
@@ -161,7 +161,7 @@ export default function AppearanceSettings() {
                       <RadioGroup
                         onValueChange={field.onChange}
                         value={field.value}
-                        className="flex flex-col gap-3"
+                        className="flex flex-col gap-6"
                       >
                         <FormItem className="flex items-center gap-3">
                           <FormControl>
@@ -196,7 +196,7 @@ export default function AppearanceSettings() {
                       <RadioGroup
                         onValueChange={field.onChange}
                         value={field.value}
-                        className="flex flex-col gap-3"
+                        className="flex flex-col gap-6"
                       >
                         <FormItem className="flex items-center gap-3">
                           <FormControl>
