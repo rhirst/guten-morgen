@@ -86,3 +86,7 @@ storybook-static
 
 # Deployment scripts (contain server-specific paths)
 *.env.production
+
+# Local Netlify folder
+.netlify
+deno.lock

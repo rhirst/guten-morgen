@@ -9,6 +9,7 @@ import { WeatherCard } from "@/app/dashboard/components/weather-card"
 import { WeekAgenda } from "@/app/dashboard/components/week-agenda"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { DEFAULT_TASK_DAY_TIMEZONE } from "@/lib/google-dates"
+import SmartDisplayPhotos from "@/app/dashboard/components/image-slideshow"
 
 export default function Page() {
   const { settings } = useDashboardSettings()
@@ -41,23 +42,27 @@ export default function Page() {
             <WeatherCard temperatureUnit={settings?.temperature_unit} />
           </div>
         </div>
+        <div className="flex flex-row gap-4 w-full">
+          <SmartDisplayPhotos />
+          <div className="flex flex-col gap-4 w-full">
+            <WeekAgenda
+              events={calendar.events}
+              loading={calendar.loading}
+              error={calendar.error}
+              isAuthorized={isAuthorized}
+            />
 
-        <WeekAgenda
-          events={calendar.events}
-          loading={calendar.loading}
-          error={calendar.error}
-          isAuthorized={isAuthorized}
-        />
-
-        <TasksCard
-          tasks={tasks.tasks}
-          taskLists={tasks.visibleTaskLists}
-          loading={tasks.loading}
-          error={tasks.error}
-          isAuthorized={isAuthorized}
-          taskDayTimezone={taskDayTimezone}
-          onToggleTaskCompleted={tasks.toggleTaskCompleted}
-        />
+            <TasksCard
+              tasks={tasks.tasks}
+              taskLists={tasks.visibleTaskLists}
+              loading={tasks.loading}
+              error={tasks.error}
+              isAuthorized={isAuthorized}
+              taskDayTimezone={taskDayTimezone}
+              onToggleTaskCompleted={tasks.toggleTaskCompleted}
+            />
+          </div>
+        </div>
       </div>
     </BaseLayout>
   )

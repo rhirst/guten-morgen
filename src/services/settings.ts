@@ -20,6 +20,8 @@ export type DashboardSettings = {
   task_day_timezone: string;
   /** null = app defaults; saved theme customizer selections */
   theme_customization: ThemeCustomization | null;
+  /** null = no album; full iCloud shared album URL for the slideshow */
+  icloud_shared_album_url: string | null;
 };
 
 /** Common IANA zones for the Sources timezone picker. */
@@ -200,6 +202,15 @@ function normalizeTaskDayTimezone(value: unknown): string {
   return DEFAULT_TASK_DAY_TIMEZONE;
 }
 
+function normalizeOptionalUrl(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 function normalizeSettings(data: DashboardSettings): DashboardSettings {
   return {
     ...data,
@@ -207,6 +218,7 @@ function normalizeSettings(data: DashboardSettings): DashboardSettings {
     enabled_task_list_ids: normalizeIdArray(data.enabled_task_list_ids),
     task_day_timezone: normalizeTaskDayTimezone(data.task_day_timezone),
     theme_customization: normalizeThemeCustomization(data.theme_customization),
+    icloud_shared_album_url: normalizeOptionalUrl(data.icloud_shared_album_url),
   };
 }
 
