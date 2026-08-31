@@ -14,6 +14,7 @@ import {
   getTaskDayBoundary,
 } from "@/lib/google-dates";
 import type { GoogleTaskList, Task } from "@/services/google/tasks.types";
+import { cn } from "@/lib/utils";
 
 /**
  * Incomplete: undated, due today, or overdue (by task calendar date).
@@ -79,6 +80,7 @@ export function TasksCard({
   isAuthorized,
   taskDayTimezone = DEFAULT_TASK_DAY_TIMEZONE,
   onToggleTaskCompleted,
+  className,
 }: {
   tasks: Task[];
   taskLists: GoogleTaskList[];
@@ -87,6 +89,7 @@ export function TasksCard({
   isAuthorized: boolean;
   taskDayTimezone?: string;
   onToggleTaskCompleted?: (task: Task) => Promise<void>;
+  className?: string;
 }) {
   const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
 
@@ -127,14 +130,14 @@ export function TasksCard({
   }
 
   return (
-    <Card className="gap-0 p-0 py-2">
-      <CardHeader>
+    <Card className={cn("flex h-full min-h-0 flex-col gap-0 p-0 py-2", className)}>
+      <CardHeader className="shrink-0">
         <CardTitle className="flex items-center gap-2 text-base ">
           <CheckSquare className="size-4" />
           Tasks
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="min-h-0 flex-1 overflow-y-auto">
         {!isAuthorized && (
           <p className="text-sm text-muted-foreground">
             Connect Google Calendar & Tasks to see your list. Reconnect if you

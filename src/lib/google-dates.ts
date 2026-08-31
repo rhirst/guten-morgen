@@ -139,6 +139,10 @@ export function formatDateOnlyLabel(
   options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" }
 ): string {
   const [year, month, day] = dateOnly.slice(0, 10).split("-").map(Number);
+  // if it is the current day, return "Today"
+  if (isSameDateString(dateOnly, formatLocalDate())) {
+    return "Today";
+  }
   return new Intl.DateTimeFormat(undefined, options).format(
     new Date(year, month - 1, day)
   );

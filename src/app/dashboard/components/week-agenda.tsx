@@ -112,11 +112,13 @@ export function WeekAgenda({
   loading,
   error,
   isAuthorized,
+  className,
 }: {
   events: CalendarEvent[];
   loading: boolean;
   error: Error | null;
   isAuthorized: boolean;
+  className?: string;
 }) {
   const [selected, setSelected] = useState<CalendarEvent | null>(null);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -196,8 +198,8 @@ export function WeekAgenda({
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+      <Card className={cn("flex h-full min-h-0 flex-col", className)}>
+        <CardHeader className="flex shrink-0 flex-row items-start justify-between gap-4 space-y-0">
           <div className="space-y-1.5">
             <CardTitle className="flex items-center gap-2 text-base">
               <CalendarDays className="size-4" />
@@ -234,7 +236,7 @@ export function WeekAgenda({
             </div>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-h-0 flex-1 overflow-y-auto">
           {!isAuthorized && (
             <p className="text-sm text-muted-foreground">
               Connect Google Calendar & Tasks to see your upcoming events.
@@ -267,7 +269,7 @@ export function WeekAgenda({
                   <div
                     key={day.toISOString()}
                     className={cn(
-                      "flex w-[calc((100%-2rem)/5)] shrink-0 snap-start flex-col rounded-lg border p-2",
+                      "flex w-[calc((75%-2rem)/5)] shrink-0 snap-start flex-col rounded-lg border p-2",
                       "xl:w-[calc((100%-3rem)/7)]",
                       isToday && "border-primary/40 bg-primary/5"
                     )}

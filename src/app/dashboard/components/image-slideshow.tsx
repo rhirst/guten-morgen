@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
 import { useDashboardSettings } from "@/hooks/useDashboardSettings"
 
 type SlideshowImage = {
@@ -101,26 +100,19 @@ export default function SmartDisplayPhotos() {
 
   if (settingsLoading) {
     return (
-      <div className="flex min-h-48 w-full items-center justify-center bg-muted text-sm text-muted-foreground">
+      <div className="flex h-full w-full items-center justify-center bg-muted text-sm text-muted-foreground">
         Loading photo settings…
       </div>
     )
   }
 
   if (!albumUrl) {
-    return (
-      <div className="flex min-h-48 w-full flex-col items-center justify-center gap-2 bg-muted px-4 text-center text-sm text-muted-foreground">
-        <p>Set your shared album URL in Settings → Sources to enable the slideshow.</p>
-        <Link to="/settings/sources" className="text-primary underline-offset-4 hover:underline">
-          Open Sources
-        </Link>
-      </div>
-    )
+    return (<div></div>)
   }
 
   if (error) {
     return (
-      <div className="flex min-h-48 w-full items-center justify-center bg-muted px-4 text-center text-sm text-destructive">
+      <div className="flex h-full w-full items-center justify-center bg-muted px-4 text-center text-sm text-destructive">
         {error}
       </div>
     )
@@ -128,14 +120,14 @@ export default function SmartDisplayPhotos() {
 
   if (!images.length) {
     return (
-      <div className="flex min-h-48 w-full items-center justify-center bg-muted text-sm text-muted-foreground">
+      <div className="flex h-full w-full items-center justify-center bg-muted text-sm text-muted-foreground">
         Syncing Apple Photo Stream…
       </div>
     )
   }
 
   return (
-    <div className="h-full w-full bg-black">
+    <div className="h-full w-full bg-black rounded-lg overflow-hidden">
       <img
         src={images[index]?.url}
         alt={images[index]?.caption || "Shared album photo"}

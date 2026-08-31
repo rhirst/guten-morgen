@@ -10,6 +10,7 @@ import { WeekAgenda } from "@/app/dashboard/components/week-agenda"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { DEFAULT_TASK_DAY_TIMEZONE } from "@/lib/google-dates"
 import SmartDisplayPhotos from "@/app/dashboard/components/image-slideshow"
+import { cn } from "@/lib/utils"
 
 export default function Page() {
   const { settings } = useDashboardSettings()
@@ -20,6 +21,7 @@ export default function Page() {
   const tasks = useTasks(settings?.enabled_task_list_ids, taskDayTimezone)
 
   const now = new Date()
+  const hasAlbum = Boolean(settings?.icloud_shared_album_url)
 
   const dateLabel = new Intl.DateTimeFormat(undefined, {
     weekday: "long",
@@ -28,24 +30,30 @@ export default function Page() {
   }).format(now)
 
   return (
-    <BaseLayout>
-      <div className="@container/main space-y-4 px-4">
-        <div className="flex flex-col gap-4 lg:flex-row items-center lg:justify-between">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger />
-              <p className="text-sm text-muted-foreground">{dateLabel}</p>
+    <BaseLayout hideFooter fillViewport>
+      <div className="flex h-full min-h-0 w-full flex-1 flex-row gap-2 overflow-hidden px-4 pb-2">
+        <div
+          className={cn(
+            "flex min-h-0 min-w-0 flex-1 flex-col gap-4",
+            hasAlbum && "max-w-[70%]"
+          )}
+        >
+          <header className="flex shrink-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <SidebarTrigger />
+                <p className="text-sm text-muted-foreground">{dateLabel}</p>
+              </div>
+              <LiveClock clockFormat={settings?.clock_format ?? "12h"} />
             </div>
-            <LiveClock clockFormat={settings?.clock_format ?? "12h"} />
-          </div>
-          <div className="flex w-full flex-col gap-4 sm:max-w-sm">
-            <WeatherCard temperatureUnit={settings?.temperature_unit} />
-          </div>
-        </div>
-        <div className="flex flex-row gap-4 w-full">
-          <SmartDisplayPhotos />
-          <div className="flex flex-col gap-4 w-full">
+            <div className="flex w-full flex-col gap-4 sm:max-w-sm">
+              <WeatherCard temperatureUnit={settings?.temperature_unit} />
+            </div>
+          </header>
+
+          <div className="flex min-h-0 flex-1 flex-col gap-4">
             <WeekAgenda
+              className="min-h-0 flex-1"
               events={calendar.events}
               loading={calendar.loading}
               error={calendar.error}
@@ -53,6 +61,7 @@ export default function Page() {
             />
 
             <TasksCard
+              className="min-h-0 flex-1"
               tasks={tasks.tasks}
               taskLists={tasks.visibleTaskLists}
               loading={tasks.loading}
@@ -63,6 +72,12 @@ export default function Page() {
             />
           </div>
         </div>
+
+        {hasAlbum && (
+          <div className="h-full w-[30%] shrink-0 min-h-0">
+            <SmartDisplayPhotos />
+          </div>
+        )}
       </div>
     </BaseLayout>
   )
