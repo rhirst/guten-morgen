@@ -198,7 +198,7 @@ export function WeekAgenda({
 
   return (
     <>
-      <Card className={cn("flex h-full min-h-0 flex-col", className)}>
+      <Card className={cn("flex min-h-0 flex-col", className)}>
         <CardHeader className="flex shrink-0 flex-row items-start justify-between gap-4 space-y-0">
           <div className="space-y-1.5">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -236,7 +236,7 @@ export function WeekAgenda({
             </div>
           )}
         </CardHeader>
-        <CardContent className="min-h-0 flex-1 overflow-y-auto">
+        <CardContent className="min-h-0 overflow-y-auto">
           {!isAuthorized && (
             <p className="text-sm text-muted-foreground">
               Connect Google Calendar & Tasks to see your upcoming events.

@@ -53,7 +53,7 @@ export default function Page() {
 
           <div className="flex min-h-0 flex-1 flex-col gap-4">
             <WeekAgenda
-              className="min-h-0 flex-1"
+              className="min-h-0 flex-shrink-1"
               events={calendar.events}
               loading={calendar.loading}
               error={calendar.error}
@@ -61,7 +61,7 @@ export default function Page() {
             />
 
             <TasksCard
-              className="min-h-0 flex-1"
+              className="min-h-0 flex-1 flex-shrink-0"
               tasks={tasks.tasks}
               taskLists={tasks.visibleTaskLists}
               loading={tasks.loading}
