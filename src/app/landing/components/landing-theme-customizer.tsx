@@ -16,6 +16,7 @@ import { ColorPicker } from '@/components/color-picker'
 import { ImportModal } from '@/components/theme-customizer/import-modal'
 import { cn } from '@/lib/utils'
 import type { ImportedTheme } from '@/types/theme-customizer'
+import { toCompatibleCssColor } from '@/utils/css-color'
 import "@/components/theme-customizer/circular-transition.css"
 
 interface LandingThemeCustomizerProps {
@@ -209,19 +210,19 @@ export function LandingThemeCustomizer({ open, onOpenChange }: LandingThemeCusto
                           <div className="flex gap-1">
                             <div
                               className="w-3 h-3 rounded-full border border-border/20"
-                              style={{ backgroundColor: theme.preset.styles.light.primary }}
+                              style={{ backgroundColor: toCompatibleCssColor(theme.preset.styles.light.primary!) }}
                             />
                             <div
                               className="w-3 h-3 rounded-full border border-border/20"
-                              style={{ backgroundColor: theme.preset.styles.light.secondary }}
+                              style={{ backgroundColor: toCompatibleCssColor(theme.preset.styles.light.secondary!) }}
                             />
                             <div
                               className="w-3 h-3 rounded-full border border-border/20"
-                              style={{ backgroundColor: theme.preset.styles.light.accent }}
+                              style={{ backgroundColor: toCompatibleCssColor(theme.preset.styles.light.accent!) }}
                             />
                             <div
                               className="w-3 h-3 rounded-full border border-border/20"
-                              style={{ backgroundColor: theme.preset.styles.light.muted }}
+                              style={{ backgroundColor: toCompatibleCssColor(theme.preset.styles.light.muted!) }}
                             />
                           </div>
                           <span>{theme.name}</span>
@@ -266,19 +267,19 @@ export function LandingThemeCustomizer({ open, onOpenChange }: LandingThemeCusto
                           <div className="flex gap-1">
                             <div
                               className="w-3 h-3 rounded-full border border-border/20"
-                              style={{ backgroundColor: theme.preset.styles.light.primary }}
+                              style={{ backgroundColor: toCompatibleCssColor(theme.preset.styles.light.primary!) }}
                             />
                             <div
                               className="w-3 h-3 rounded-full border border-border/20"
-                              style={{ backgroundColor: theme.preset.styles.light.secondary }}
+                              style={{ backgroundColor: toCompatibleCssColor(theme.preset.styles.light.secondary!) }}
                             />
                             <div
                               className="w-3 h-3 rounded-full border border-border/20"
-                              style={{ backgroundColor: theme.preset.styles.light.accent }}
+                              style={{ backgroundColor: toCompatibleCssColor(theme.preset.styles.light.accent!) }}
                             />
                             <div
                               className="w-3 h-3 rounded-full border border-border/20"
-                              style={{ backgroundColor: theme.preset.styles.light.muted }}
+                              style={{ backgroundColor: toCompatibleCssColor(theme.preset.styles.light.muted!) }}
                             />
                           </div>
                           <span>{theme.name}</span>

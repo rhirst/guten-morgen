@@ -6,12 +6,12 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { useThemeManager } from '@/hooks/use-theme-manager'
 import { useCircularTransition } from '@/hooks/use-circular-transition'
 import { colorThemes, tweakcnThemes } from '@/config/theme-data'
 import { radiusOptions, baseColors } from '@/config/theme-customizer-constants'
 import { ColorPicker } from '@/components/color-picker'
-import type { ImportedTheme } from '@/types/theme-customizer'
+import type { ImportedTheme, ThemePreset } from '@/types/theme-customizer'
+import { toCompatibleCssColor } from '@/utils/css-color'
 import React from 'react'
 import "./circular-transition.css"
 
@@ -24,6 +24,13 @@ interface ThemeTabProps {
   setSelectedRadius: (radius: string) => void
   setImportedTheme: (theme: ImportedTheme | null) => void
   onImportClick: () => void
+  onBrandColorChange: (cssVar: string, value: string) => void
+  onClearBrandColors: () => void
+  brandColorsValues: Record<string, string>
+  isDarkMode: boolean
+  applyTheme: (themeValue: string, darkMode: boolean) => void
+  applyTweakcnTheme: (themePreset: ThemePreset, darkMode: boolean) => void
+  applyRadius: (radius: string) => void
 }
 
 export function ThemeTab({
@@ -34,37 +41,32 @@ export function ThemeTab({
   selectedRadius,
   setSelectedRadius,
   setImportedTheme,
-  onImportClick
+  onImportClick,
+  onBrandColorChange,
+  onClearBrandColors,
+  brandColorsValues,
+  isDarkMode,
+  applyTheme,
+  applyTweakcnTheme,
+  applyRadius,
 }: ThemeTabProps) {
-  const {
-    isDarkMode,
-    brandColorsValues,
-    setBrandColorsValues,
-    applyTheme,
-    applyTweakcnTheme,
-    applyRadius,
-    handleColorChange
-  } = useThemeManager()
-
   const { toggleTheme } = useCircularTransition()
 
   const handleRandomShadcn = () => {
-    // Apply a random shadcn theme
     const randomTheme = colorThemes[Math.floor(Math.random() * colorThemes.length)]
     setSelectedTheme(randomTheme.value)
-    setSelectedTweakcnTheme("") // Clear tweakcn selection
-    setBrandColorsValues({}) // Clear brand colors state
-    setImportedTheme(null) // Clear imported theme
+    setSelectedTweakcnTheme("")
+    onClearBrandColors()
+    setImportedTheme(null)
     applyTheme(randomTheme.value, isDarkMode)
   }
 
   const handleRandomTweakcn = () => {
-    // Apply a random tweakcn theme
     const randomTheme = tweakcnThemes[Math.floor(Math.random() * tweakcnThemes.length)]
     setSelectedTweakcnTheme(randomTheme.value)
-    setSelectedTheme("") // Clear shadcn selection
-    setBrandColorsValues({}) // Clear brand colors state
-    setImportedTheme(null) // Clear imported theme
+    setSelectedTheme("")
+    onClearBrandColors()
+    setImportedTheme(null)
     applyTweakcnTheme(randomTheme.preset, isDarkMode)
   }
 
@@ -99,9 +101,9 @@ export function ThemeTab({
 
         <Select value={selectedTheme} onValueChange={(value) => {
           setSelectedTheme(value)
-          setSelectedTweakcnTheme("") // Clear tweakcn selection
-          setBrandColorsValues({}) // Clear brand colors state
-          setImportedTheme(null) // Clear imported theme
+          setSelectedTweakcnTheme("")
+          onClearBrandColors()
+          setImportedTheme(null)
           applyTheme(value, isDarkMode)
         }}>
           <SelectTrigger className="w-full cursor-pointer">
@@ -115,19 +117,19 @@ export function ThemeTab({
                     <div className="flex gap-1">
                       <div
                         className="w-3 h-3 rounded-full border border-border/20"
-                        style={{ backgroundColor: theme.preset.styles.light.primary }}
+                        style={{ backgroundColor: toCompatibleCssColor(theme.preset.styles.light.primary!) }}
                       />
                       <div
                         className="w-3 h-3 rounded-full border border-border/20"
-                        style={{ backgroundColor: theme.preset.styles.light.secondary }}
+                        style={{ backgroundColor: toCompatibleCssColor(theme.preset.styles.light.secondary!) }}
                       />
                       <div
                         className="w-3 h-3 rounded-full border border-border/20"
-                        style={{ backgroundColor: theme.preset.styles.light.accent }}
+                        style={{ backgroundColor: toCompatibleCssColor(theme.preset.styles.light.accent!) }}
                       />
                       <div
                         className="w-3 h-3 rounded-full border border-border/20"
-                        style={{ backgroundColor: theme.preset.styles.light.muted }}
+                        style={{ backgroundColor: toCompatibleCssColor(theme.preset.styles.light.muted!) }}
                       />
                     </div>
                     <span>{theme.name}</span>
@@ -153,9 +155,9 @@ export function ThemeTab({
 
         <Select value={selectedTweakcnTheme} onValueChange={(value) => {
           setSelectedTweakcnTheme(value)
-          setSelectedTheme("") // Clear shadcn selection
-          setBrandColorsValues({}) // Clear brand colors state
-          setImportedTheme(null) // Clear imported theme
+          setSelectedTheme("")
+          onClearBrandColors()
+          setImportedTheme(null)
           const selectedPreset = tweakcnThemes.find(t => t.value === value)?.preset
           if (selectedPreset) {
             applyTweakcnTheme(selectedPreset, isDarkMode)
@@ -172,19 +174,19 @@ export function ThemeTab({
                     <div className="flex gap-1">
                       <div
                         className="w-3 h-3 rounded-full border border-border/20"
-                        style={{ backgroundColor: theme.preset.styles.light.primary }}
+                        style={{ backgroundColor: toCompatibleCssColor(theme.preset.styles.light.primary!) }}
                       />
                       <div
                         className="w-3 h-3 rounded-full border border-border/20"
-                        style={{ backgroundColor: theme.preset.styles.light.secondary }}
+                        style={{ backgroundColor: toCompatibleCssColor(theme.preset.styles.light.secondary!) }}
                       />
                       <div
                         className="w-3 h-3 rounded-full border border-border/20"
-                        style={{ backgroundColor: theme.preset.styles.light.accent }}
+                        style={{ backgroundColor: toCompatibleCssColor(theme.preset.styles.light.accent!) }}
                       />
                       <div
                         className="w-3 h-3 rounded-full border border-border/20"
-                        style={{ backgroundColor: theme.preset.styles.light.muted }}
+                        style={{ backgroundColor: toCompatibleCssColor(theme.preset.styles.light.muted!) }}
                       />
                     </div>
                     <span>{theme.name}</span>
@@ -275,7 +277,7 @@ export function ThemeTab({
                   label={color.name}
                   cssVar={color.cssVar}
                   value={brandColorsValues[color.cssVar] || ""}
-                  onChange={handleColorChange}
+                  onChange={onBrandColorChange}
                 />
               </div>
             ))}

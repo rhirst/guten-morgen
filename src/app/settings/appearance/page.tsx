@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -20,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useDashboardSettings } from "@/hooks/useDashboardSettings"
 import { useTheme } from "@/hooks/use-theme"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { ThemeCustomizer } from "@/components/theme-customizer"
 
 const appearanceFormSchema = z.object({
   theme: z.enum(["light", "dark", "system"]),
@@ -55,6 +56,7 @@ function normalizeTemperature(
 export default function AppearanceSettings() {
   const { settings, loading, update } = useDashboardSettings()
   const { setTheme } = useTheme()
+  const [themeCustomizerOpen, setThemeCustomizerOpen] = useState(false)
 
   const form = useForm<AppearanceFormValues>({
     resolver: zodResolver(appearanceFormSchema),
@@ -107,6 +109,23 @@ export default function AppearanceSettings() {
         {!loading && (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-lg space-y-8">
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium leading-none">Customizer</p>
+                  <p className="text-sm text-muted-foreground">
+                    Colors, radius, and layout for the dashboard.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="cursor-pointer"
+                  onClick={() => setThemeCustomizerOpen(true)}
+                >
+                  Open customizer
+                </Button>
+              </div>
+
               <FormField
                 control={form.control}
                 name="theme"
@@ -228,6 +247,10 @@ export default function AppearanceSettings() {
           </Form>
         )}
       </div>
+      <ThemeCustomizer
+        open={themeCustomizerOpen}
+        onOpenChange={setThemeCustomizerOpen}
+      />
     </BaseLayout>
   )
 }

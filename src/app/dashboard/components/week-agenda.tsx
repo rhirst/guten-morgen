@@ -1,5 +1,12 @@
-import { useMemo, useState } from "react";
-import { CalendarDays, MapPin } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
+import { CalendarDays, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -14,10 +21,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   eventOccupiesLocalDay,
   formatLocalDate,
-  rollingWeekDays,
+  rollingMonthDays,
 } from "@/lib/google-dates";
 import type { CalendarEvent } from "@/services/google/calendar.types";
 import { cn } from "@/lib/utils";
@@ -79,6 +87,26 @@ function sortDayEvents(a: CalendarEvent, b: CalendarEvent) {
   return a.start.getTime() - b.start.getTime();
 }
 
+function scrollStripBy(el: HTMLElement, delta: number) {
+  if (typeof el.scrollBy === "function") {
+    try {
+      el.scrollBy({ left: delta, behavior: "smooth" });
+      return;
+    } catch {
+      // Older browsers may reject the options object.
+    }
+
+    try {
+      el.scrollBy(delta, 0);
+      return;
+    } catch {
+      // Fall through to scrollLeft.
+    }
+  }
+
+  el.scrollLeft += delta;
+}
+
 export function WeekAgenda({
   events,
   loading,
@@ -91,7 +119,10 @@ export function WeekAgenda({
   isAuthorized: boolean;
 }) {
   const [selected, setSelected] = useState<CalendarEvent | null>(null);
-  const days = useMemo(() => rollingWeekDays(), []);
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const days = useMemo(() => rollingMonthDays(), []);
   const todayKey = formatLocalDate();
 
   const eventsByDay = useMemo(() => {
@@ -103,22 +134,110 @@ export function WeekAgenda({
     }));
   }, [days, events]);
 
+  const updateScrollState = useCallback(() => {
+    const el = stripRef.current;
+    if (!el) {
+      return;
+    }
+
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    setCanScrollPrev(el.scrollLeft > 1);
+    setCanScrollNext(el.scrollLeft < maxScroll - 1);
+  }, []);
+
+  useEffect(() => {
+    const el = stripRef.current;
+    if (!el) {
+      return;
+    }
+
+    updateScrollState();
+    el.addEventListener("scroll", updateScrollState, { passive: true });
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(updateScrollState)
+        : null;
+    resizeObserver?.observe(el);
+
+    window.addEventListener("resize", updateScrollState);
+
+    return () => {
+      el.removeEventListener("scroll", updateScrollState);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", updateScrollState);
+    };
+  }, [updateScrollState, eventsByDay.length, isAuthorized, loading, error]);
+
+  const scrollByPage = useCallback(
+    (direction: -1 | 1) => {
+      const el = stripRef.current;
+      if (!el) {
+        return;
+      }
+
+      scrollStripBy(el, direction * el.clientWidth);
+    },
+    []
+  );
+
+  const handleStripKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        scrollByPage(-1);
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        scrollByPage(1);
+      }
+    },
+    [scrollByPage]
+  );
+
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <CalendarDays className="size-4" />
-            This week
-          </CardTitle>
-          <CardDescription>
-            Rolling 7 days from today — click an event for details
-          </CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+          <div className="space-y-1.5">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <CalendarDays className="size-4" />
+              Upcoming
+            </CardTitle>
+            <CardDescription>
+              Next 30 days — swipe or use arrows to browse
+            </CardDescription>
+          </div>
+          {isAuthorized && !loading && !error && (
+            <div className="flex shrink-0 gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="size-8"
+                aria-label="Previous days"
+                disabled={!canScrollPrev}
+                onClick={() => scrollByPage(-1)}
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="size-8"
+                aria-label="Next days"
+                disabled={!canScrollNext}
+                onClick={() => scrollByPage(1)}
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {!isAuthorized && (
             <p className="text-sm text-muted-foreground">
-              Connect Google Calendar & Tasks to see your week.
+              Connect Google Calendar & Tasks to see your upcoming events.
             </p>
           )}
           {isAuthorized && loading && (
@@ -128,7 +247,19 @@ export function WeekAgenda({
             <p className="text-sm text-destructive">{error.message}</p>
           )}
           {isAuthorized && !loading && !error && (
-            <div className="flex gap-2 overflow-x-auto pb-1 lg:grid lg:grid-cols-7 lg:overflow-visible">
+            <div
+              ref={stripRef}
+              tabIndex={0}
+              role="region"
+              aria-label="Upcoming calendar days"
+              onKeyDown={handleStripKeyDown}
+              className={cn(
+                "flex gap-2 overflow-x-auto pb-1",
+                "snap-x snap-mandatory scroll-smooth",
+                "[-webkit-overflow-scrolling:touch]",
+                "[scrollbar-width:thin]"
+              )}
+            >
               {eventsByDay.map(({ day, events: dayEvents }) => {
                 const isToday = formatLocalDate(day) === todayKey;
 
@@ -136,7 +267,8 @@ export function WeekAgenda({
                   <div
                     key={day.toISOString()}
                     className={cn(
-                      "flex min-w-[140px] flex-col rounded-lg border p-2 lg:min-w-0",
+                      "flex w-[calc((100%-2rem)/5)] shrink-0 snap-start flex-col rounded-lg border p-2",
+                      "lg:w-[calc((100%-3rem)/7)]",
                       isToday && "border-primary/40 bg-primary/5"
                     )}
                   >

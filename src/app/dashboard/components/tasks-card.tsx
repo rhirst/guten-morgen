@@ -9,18 +9,40 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  DEFAULT_TASK_DAY_TIMEZONE,
   formatDateOnlyLabel,
-  formatLocalDate,
-  isSameDateString,
+  getTaskCalendarDate,
+  getTaskDayBoundary,
 } from "@/lib/google-dates";
 import type { GoogleTaskList, Task } from "@/services/google/tasks.types";
 
-export function isTaskForToday(task: Task, today = formatLocalDate()) {
+/**
+ * Incomplete: undated, due today, or overdue (by task calendar date).
+ * Completed: finished at/after the 4am day boundary.
+ */
+export function isDashboardTaskVisible(
+  task: Task,
+  {
+    taskCalendarDate,
+    dayBoundary,
+  }: {
+    taskCalendarDate: string;
+    dayBoundary: Date;
+  }
+): boolean {
+  if (task.completed) {
+    if (!task.completedAt) {
+      return false;
+    }
+
+    return new Date(task.completedAt).getTime() >= dayBoundary.getTime();
+  }
+
   if (!task.due) {
     return true;
   }
 
-  return isSameDateString(task.due, today);
+  return task.due.slice(0, 10) <= taskCalendarDate;
 }
 
 function formatDue(task: Task) {
@@ -56,6 +78,7 @@ export function TasksCard({
   loading,
   error,
   isAuthorized,
+  taskDayTimezone = DEFAULT_TASK_DAY_TIMEZONE,
   onToggleTaskCompleted,
 }: {
   tasks: Task[];
@@ -63,14 +86,18 @@ export function TasksCard({
   loading: boolean;
   error: Error | null;
   isAuthorized: boolean;
+  taskDayTimezone?: string;
   onToggleTaskCompleted?: (task: Task) => Promise<void>;
 }) {
   const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
 
-  const todaysTasks = useMemo(
-    () => tasks.filter((task) => isTaskForToday(task)),
-    [tasks]
-  );
+  const todaysTasks = useMemo(() => {
+    const dayBoundary = getTaskDayBoundary(new Date(), taskDayTimezone);
+    const taskCalendarDate = getTaskCalendarDate(new Date(), taskDayTimezone);
+    return tasks.filter((task) =>
+      isDashboardTaskVisible(task, { taskCalendarDate, dayBoundary })
+    );
+  }, [taskDayTimezone, tasks]);
 
   const columns = useMemo(() => {
     return taskLists.map((list) => ({
@@ -108,7 +135,7 @@ export function TasksCard({
           Tasks
         </CardTitle>
         <CardDescription>
-          Due today and undated tasks — completed stay checked until you uncheck
+          Today, overdue, and undated — plus tasks completed since 4:00 AM
         </CardDescription>
       </CardHeader>
       <CardContent>

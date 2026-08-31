@@ -5,6 +5,7 @@ import { useTheme } from '@/hooks/use-theme'
 import { baseColors } from '@/config/theme-customizer-constants'
 import { colorThemes } from '@/config/theme-data'
 import type { ThemePreset, ImportedTheme } from '@/types/theme-customizer'
+import { toCompatibleCssColor } from '@/utils/css-color'
 
 export function useThemeManager() {
   const { theme, setTheme } = useTheme()
@@ -69,7 +70,7 @@ export function useThemeManager() {
     baseColors.forEach(color => {
       const cssVar = color.cssVar.replace('--', '')
       if (styles[cssVar]) {
-        newValues[color.cssVar] = styles[cssVar]
+        newValues[color.cssVar] = toCompatibleCssColor(styles[cssVar])
       }
     })
     setBrandColorsValues(newValues)
@@ -85,7 +86,8 @@ export function useThemeManager() {
     const root = document.documentElement
 
     Object.entries(styles).forEach(([key, value]) => {
-      root.style.setProperty(`--${key}`, value)
+      if (typeof value !== 'string') return
+      root.style.setProperty(`--${key}`, toCompatibleCssColor(value))
     })
 
     // Update brand colors values when theme changes
@@ -99,7 +101,8 @@ export function useThemeManager() {
     const root = document.documentElement
 
     Object.entries(styles).forEach(([key, value]) => {
-      root.style.setProperty(`--${key}`, value)
+      if (typeof value !== 'string') return
+      root.style.setProperty(`--${key}`, toCompatibleCssColor(value))
     })
 
     // Update brand colors values when theme changes
@@ -112,7 +115,7 @@ export function useThemeManager() {
     
     // Apply all variables from the theme
     Object.entries(themeVars).forEach(([variable, value]) => {
-      root.style.setProperty(`--${variable}`, value)
+      root.style.setProperty(`--${variable}`, toCompatibleCssColor(value))
     })
     
     // Update brand colors values for the customizer UI
@@ -120,19 +123,19 @@ export function useThemeManager() {
     baseColors.forEach(color => {
       const varName = color.cssVar.replace('--', '')
       if (themeVars[varName]) {
-        newBrandColors[color.cssVar] = themeVars[varName]
+        newBrandColors[color.cssVar] = toCompatibleCssColor(themeVars[varName])
       }
     })
     setBrandColorsValues(newBrandColors)
   }, [])
 
-  const applyRadius = (radius: string) => {
+  const applyRadius = React.useCallback((radius: string) => {
     document.documentElement.style.setProperty('--radius', radius)
-  }
+  }, [])
 
-  const handleColorChange = (cssVar: string, value: string) => {
-    document.documentElement.style.setProperty(cssVar, value)
-  }
+  const handleColorChange = React.useCallback((cssVar: string, value: string) => {
+    document.documentElement.style.setProperty(cssVar, toCompatibleCssColor(value))
+  }, [])
 
   return {
     theme,

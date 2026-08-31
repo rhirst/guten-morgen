@@ -16,20 +16,32 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useCalendar } from "@/hooks/useCalendar"
 import { useDashboardSettings } from "@/hooks/useDashboardSettings"
 import { useTasks } from "@/hooks/useTasks"
 import { useGoogleAuth } from "@/providers/GoogleAuthProvider"
+import { DEFAULT_TASK_DAY_TIMEZONE } from "@/lib/google-dates"
 import {
   enabledIdsFromToggles,
   initialSourceToggles,
+  TASK_DAY_TIMEZONE_OPTIONS,
 } from "@/services/settings"
 
 export default function SourcesSettings() {
   const { isAuthorized } = useGoogleAuth()
   const { settings, loading: settingsLoading, update } = useDashboardSettings()
   const calendar = useCalendar(settings?.enabled_calendar_ids)
-  const tasks = useTasks(settings?.enabled_task_list_ids)
+  const tasks = useTasks(
+    settings?.enabled_task_list_ids,
+    settings?.task_day_timezone
+  )
 
   const [calendarToggles, setCalendarToggles] = useState<Record<string, boolean>>(
     {}
@@ -37,6 +49,7 @@ export default function SourcesSettings() {
   const [taskListToggles, setTaskListToggles] = useState<Record<string, boolean>>(
     {}
   )
+  const [taskDayTimezone, setTaskDayTimezone] = useState(DEFAULT_TASK_DAY_TIMEZONE)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -75,6 +88,14 @@ export default function SourcesSettings() {
     tasks.taskLists,
   ])
 
+  useEffect(() => {
+    if (settingsLoading || !settings) {
+      return
+    }
+
+    setTaskDayTimezone(settings.task_day_timezone)
+  }, [settings, settingsLoading])
+
   async function handleSave() {
     setSaving(true)
 
@@ -82,6 +103,7 @@ export default function SourcesSettings() {
       await update({
         enabled_calendar_ids: enabledIdsFromToggles(calendarToggles),
         enabled_task_list_ids: enabledIdsFromToggles(taskListToggles),
+        task_day_timezone: taskDayTimezone,
       })
       toast.success("Sources saved")
     } catch (err) {
@@ -95,6 +117,11 @@ export default function SourcesSettings() {
 
   const googleLoading = calendar.loading || tasks.loading
   const googleError = calendar.error ?? tasks.error
+  const timezoneOptions = TASK_DAY_TIMEZONE_OPTIONS.includes(
+    taskDayTimezone as (typeof TASK_DAY_TIMEZONE_OPTIONS)[number]
+  )
+    ? [...TASK_DAY_TIMEZONE_OPTIONS]
+    : [taskDayTimezone, ...TASK_DAY_TIMEZONE_OPTIONS]
 
   return (
     <BaseLayout>
@@ -225,6 +252,33 @@ export default function SourcesSettings() {
                     </div>
                   ))
                 )}
+
+                <div className="space-y-2 border-t pt-4">
+                  <Label htmlFor="task-day-timezone">Task day timezone</Label>
+                  <Select
+                    value={taskDayTimezone}
+                    onValueChange={setTaskDayTimezone}
+                  >
+                    <SelectTrigger
+                      id="task-day-timezone"
+                      className="w-full cursor-pointer"
+                    >
+                      <SelectValue placeholder="Select timezone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timezoneOptions.map((zone) => (
+                        <SelectItem key={zone} value={zone}>
+                          {zone.replaceAll("_", " ")}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Task day resets at 4:00 AM in this timezone. Incomplete
+                    today/overdue/undated tasks and completions since that reset
+                    appear on the dashboard.
+                  </p>
+                </div>
               </CardContent>
             </Card>
 

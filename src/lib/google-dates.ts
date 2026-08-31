@@ -4,6 +4,118 @@
  * Google Calendar all-day `end.date` is exclusive.
  */
 
+/** Fixed hour when the task "day" rolls over in the configured timezone. */
+export const TASK_DAY_RESET_HOUR = 4;
+
+export const DEFAULT_TASK_DAY_TIMEZONE = "America/Chicago";
+
+type ZonedParts = {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+};
+
+function zonedParts(date: Date, timeZone: string): ZonedParts {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+
+  const values: Record<string, string> = {};
+  for (const part of parts) {
+    if (part.type !== "literal") {
+      values[part.type] = part.value;
+    }
+  }
+
+  return {
+    year: Number(values.year),
+    month: Number(values.month),
+    day: Number(values.day),
+    hour: Number(values.hour),
+    minute: Number(values.minute),
+    second: Number(values.second),
+  };
+}
+
+/** Instant for a wall-clock date/time in an IANA timezone. */
+function zonedTimeToUtc(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number,
+  second: number,
+  timeZone: string
+): Date {
+  const utcGuess = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+  const actual = zonedParts(utcGuess, timeZone);
+  const desiredAsUtc = Date.UTC(year, month - 1, day, hour, minute, second);
+  const actualAsUtc = Date.UTC(
+    actual.year,
+    actual.month - 1,
+    actual.day,
+    actual.hour,
+    actual.minute,
+    actual.second
+  );
+  return new Date(utcGuess.getTime() + (desiredAsUtc - actualAsUtc));
+}
+
+/**
+ * Most recent task-day reset (4:00 AM) in `timeZone`.
+ * Before 4am, returns yesterday's 4am in that zone.
+ */
+export function getTaskDayBoundary(
+  now: Date = new Date(),
+  timeZone: string = DEFAULT_TASK_DAY_TIMEZONE
+): Date {
+  const parts = zonedParts(now, timeZone);
+  let { year, month, day } = parts;
+
+  if (parts.hour < TASK_DAY_RESET_HOUR) {
+    const previous = new Date(Date.UTC(year, month - 1, day));
+    previous.setUTCDate(previous.getUTCDate() - 1);
+    year = previous.getUTCFullYear();
+    month = previous.getUTCMonth() + 1;
+    day = previous.getUTCDate();
+  }
+
+  return zonedTimeToUtc(
+    year,
+    month,
+    day,
+    TASK_DAY_RESET_HOUR,
+    0,
+    0,
+    timeZone
+  );
+}
+
+/**
+ * YYYY-MM-DD for the current task day (the calendar date of the 4am boundary
+ * in the given timezone).
+ */
+export function getTaskCalendarDate(
+  now: Date = new Date(),
+  timeZone: string = DEFAULT_TASK_DAY_TIMEZONE
+): string {
+  const boundary = getTaskDayBoundary(now, timeZone);
+  const parts = zonedParts(boundary, timeZone);
+  const month = String(parts.month).padStart(2, "0");
+  const day = String(parts.day).padStart(2, "0");
+  return `${parts.year}-${month}-${day}`;
+}
+
 /** Local calendar day as YYYY-MM-DD (avoids UTC shift from Date-only parsing). */
 export function formatLocalDate(date: Date = new Date()): string {
   const year = date.getFullYear();
@@ -56,6 +168,14 @@ export function addLocalDays(date: Date, days: number): Date {
 export function rollingWeekDays(from: Date = new Date()): Date[] {
   const start = startOfLocalDay(from);
   return Array.from({ length: 7 }, (_, index) => addLocalDays(start, index));
+}
+
+/**
+ * Rolling month: today through today+29 (30 local calendar days).
+ */
+export function rollingMonthDays(from: Date = new Date()): Date[] {
+  const start = startOfLocalDay(from);
+  return Array.from({ length: 30 }, (_, index) => addLocalDays(start, index));
 }
 
 /**

@@ -7,12 +7,16 @@ import { greetingForHour, LiveClock } from "@/app/dashboard/components/live-cloc
 import { TasksCard } from "@/app/dashboard/components/tasks-card"
 import { WeatherCard } from "@/app/dashboard/components/weather-card"
 import { WeekAgenda } from "@/app/dashboard/components/week-agenda"
+import { SidebarTrigger } from "@/components/ui/sidebar"
+import { DEFAULT_TASK_DAY_TIMEZONE } from "@/lib/google-dates"
 
 export default function Page() {
   const { settings } = useDashboardSettings()
   const { isAuthorized } = useGoogleAuth()
   const calendar = useCalendar(settings?.enabled_calendar_ids)
-  const tasks = useTasks(settings?.enabled_task_list_ids)
+  const taskDayTimezone =
+    settings?.task_day_timezone ?? DEFAULT_TASK_DAY_TIMEZONE
+  const tasks = useTasks(settings?.enabled_task_list_ids, taskDayTimezone)
 
   const now = new Date()
 
@@ -20,14 +24,17 @@ export default function Page() {
     weekday: "long",
     month: "long",
     day: "numeric",
-  }).format(now)  
+  }).format(now)
 
   return (
     <BaseLayout>
       <div className="@container/main space-y-6 px-4 lg:px-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">{dateLabel}</p>
+            <div className="flex items-center gap-2">
+              <SidebarTrigger />
+              <p className="text-sm text-muted-foreground">{dateLabel}</p>
+            </div>
             <h1 className="text-3xl font-bold tracking-tight">
               {greetingForHour(now.getHours())}
             </h1>
@@ -51,6 +58,7 @@ export default function Page() {
           loading={tasks.loading}
           error={tasks.error}
           isAuthorized={isAuthorized}
+          taskDayTimezone={taskDayTimezone}
           onToggleTaskCompleted={tasks.toggleTaskCompleted}
         />
       </div>

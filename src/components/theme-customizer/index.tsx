@@ -2,61 +2,252 @@
 
 import React from 'react'
 import { Layout, Palette, RotateCcw, Settings, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useThemeManager } from '@/hooks/use-theme-manager'
 import { useSidebarConfig } from '@/contexts/sidebar-context'
-import { tweakcnThemes } from '@/config/theme-data'
+import { useDashboardSettings } from '@/hooks/useDashboardSettings'
 import { ThemeTab } from './theme-tab'
 import { LayoutTab } from './layout-tab'
 import { ImportModal } from './import-modal'
 import { cn } from '@/lib/utils'
-import type { ImportedTheme } from '@/types/theme-customizer'
+import {
+  CLEARED_THEME_CUSTOMIZATION,
+  DEFAULT_THEME_CUSTOMIZATION,
+  DEFAULT_THEME_LAYOUT,
+  type ImportedTheme,
+  type ThemeCustomization,
+} from '@/types/theme-customizer'
+import { applyThemeCustomization } from '@/utils/apply-theme-customization'
 
 interface ThemeCustomizerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
+const PERSIST_DEBOUNCE_MS = 400
+
 export function ThemeCustomizer({ open, onOpenChange }: ThemeCustomizerProps) {
-  const { applyImportedTheme, isDarkMode, resetTheme, applyRadius, setBrandColorsValues, applyTheme, applyTweakcnTheme } = useThemeManager()
+  const {
+    applyImportedTheme,
+    isDarkMode,
+    resetTheme,
+    applyRadius,
+    setBrandColorsValues,
+    applyTheme,
+    applyTweakcnTheme,
+    handleColorChange,
+    brandColorsValues,
+  } = useThemeManager()
   const { config: sidebarConfig, updateConfig: updateSidebarConfig } = useSidebarConfig()
+  const { settings, update } = useDashboardSettings()
 
   const [activeTab, setActiveTab] = React.useState("theme")
-  const [selectedTheme, setSelectedTheme] = React.useState("default")
-  const [selectedTweakcnTheme, setSelectedTweakcnTheme] = React.useState("")
-  const [selectedRadius, setSelectedRadius] = React.useState("0.5rem")
+  const [selectedTheme, setSelectedTheme] = React.useState(
+    DEFAULT_THEME_CUSTOMIZATION.selectedTheme
+  )
+  const [selectedTweakcnTheme, setSelectedTweakcnTheme] = React.useState(
+    DEFAULT_THEME_CUSTOMIZATION.selectedTweakcnTheme
+  )
+  const [selectedRadius, setSelectedRadius] = React.useState(
+    DEFAULT_THEME_CUSTOMIZATION.selectedRadius
+  )
   const [importModalOpen, setImportModalOpen] = React.useState(false)
   const [importedTheme, setImportedTheme] = React.useState<ImportedTheme | null>(null)
+  const [brandColors, setBrandColors] = React.useState<Record<string, string>>({})
+
+  const hydratedRef = React.useRef(false)
+  const persistTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const skipNextPersistRef = React.useRef(false)
+  const pendingPersistRef = React.useRef<ThemeCustomization | null>(null)
+  const updateRef = React.useRef(update)
+  updateRef.current = update
+
+  const customizationSnapshot = React.useMemo<ThemeCustomization>(
+    () => ({
+      selectedTheme,
+      selectedTweakcnTheme,
+      selectedRadius,
+      importedTheme,
+      brandColors,
+      layout: {
+        variant: sidebarConfig.variant,
+        collapsible: sidebarConfig.collapsible,
+        side: sidebarConfig.side,
+      },
+    }),
+    [
+      selectedTheme,
+      selectedTweakcnTheme,
+      selectedRadius,
+      importedTheme,
+      brandColors,
+      sidebarConfig.variant,
+      sidebarConfig.collapsible,
+      sidebarConfig.side,
+    ]
+  )
+  const customizationRef = React.useRef<ThemeCustomization>(customizationSnapshot)
+  customizationRef.current = customizationSnapshot
+
+  const persistCustomization = React.useCallback(async (next: ThemeCustomization) => {
+    try {
+      await updateRef.current({ theme_customization: next })
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not save theme customization"
+      )
+    }
+  }, [])
+
+  const schedulePersist = React.useCallback(
+    (next: ThemeCustomization) => {
+      pendingPersistRef.current = next
+      if (persistTimerRef.current) {
+        clearTimeout(persistTimerRef.current)
+      }
+      persistTimerRef.current = setTimeout(() => {
+        const payload = pendingPersistRef.current
+        pendingPersistRef.current = null
+        persistTimerRef.current = null
+        if (payload) {
+          void persistCustomization(payload)
+        }
+      }, PERSIST_DEBOUNCE_MS)
+    },
+    [persistCustomization]
+  )
+
+  const flushPendingPersist = React.useCallback(() => {
+    if (persistTimerRef.current) {
+      clearTimeout(persistTimerRef.current)
+      persistTimerRef.current = null
+    }
+    const payload = pendingPersistRef.current
+    pendingPersistRef.current = null
+    if (payload) {
+      void persistCustomization(payload)
+    }
+  }, [persistCustomization])
+
+  const hydrateFromCustomization = React.useCallback(
+    (customization: ThemeCustomization) => {
+      skipNextPersistRef.current = true
+      setSelectedTheme(customization.selectedTheme)
+      setSelectedTweakcnTheme(customization.selectedTweakcnTheme)
+      setSelectedRadius(customization.selectedRadius)
+      setImportedTheme(customization.importedTheme)
+      setBrandColors(customization.brandColors)
+      setBrandColorsValues(customization.brandColors)
+      updateSidebarConfig(customization.layout ?? DEFAULT_THEME_LAYOUT)
+      applyThemeCustomization(customization, isDarkMode, {
+        resetTheme,
+        applyTheme,
+        applyTweakcnTheme,
+        applyImportedTheme,
+        applyRadius,
+        handleColorChange,
+        setBrandColorsValues,
+      })
+    },
+    [
+      isDarkMode,
+      resetTheme,
+      applyTheme,
+      applyTweakcnTheme,
+      applyImportedTheme,
+      applyRadius,
+      handleColorChange,
+      setBrandColorsValues,
+      updateSidebarConfig,
+    ]
+  )
+
+  React.useEffect(() => {
+    if (!settings) {
+      hydratedRef.current = false
+      return
+    }
+
+    if (hydratedRef.current) {
+      return
+    }
+
+    hydratedRef.current = true
+    const saved = settings.theme_customization
+    if (saved) {
+      hydrateFromCustomization(saved)
+    } else {
+      skipNextPersistRef.current = true
+    }
+  }, [settings, hydrateFromCustomization])
+
+  React.useEffect(() => {
+    if (!hydratedRef.current || !settings) {
+      return
+    }
+
+    if (skipNextPersistRef.current) {
+      skipNextPersistRef.current = false
+      return
+    }
+
+    schedulePersist(customizationSnapshot)
+  }, [customizationSnapshot, schedulePersist, settings])
+
+  React.useEffect(() => {
+    return () => {
+      flushPendingPersist()
+    }
+  }, [flushPendingPersist])
+
+  // Re-apply light/dark style maps when mode flips (after hydrate; selection handlers apply immediately)
+  React.useEffect(() => {
+    if (!hydratedRef.current) {
+      return
+    }
+
+    applyThemeCustomization(customizationRef.current, isDarkMode, {
+      resetTheme,
+      applyTheme,
+      applyTweakcnTheme,
+      applyImportedTheme,
+      applyRadius,
+      handleColorChange,
+      setBrandColorsValues,
+    })
+  }, [
+    isDarkMode,
+    resetTheme,
+    applyTheme,
+    applyTweakcnTheme,
+    applyImportedTheme,
+    applyRadius,
+    handleColorChange,
+    setBrandColorsValues,
+  ])
 
   const handleReset = () => {
-    // Complete reset to application defaults
+    setSelectedTheme(CLEARED_THEME_CUSTOMIZATION.selectedTheme)
+    setSelectedTweakcnTheme(CLEARED_THEME_CUSTOMIZATION.selectedTweakcnTheme)
+    setSelectedRadius(CLEARED_THEME_CUSTOMIZATION.selectedRadius)
+    setImportedTheme(null)
+    setBrandColors({})
+    setBrandColorsValues({})
 
-    // 1. Reset all state variables to initial values
-    setSelectedTheme("")  // Clear theme selection after reset
-    setSelectedTweakcnTheme("")
-    setSelectedRadius("0.5rem")
-    setImportedTheme(null) // Clear imported theme
-    setBrandColorsValues({}) // Clear brand colors state
-
-    // 2. Completely remove all custom CSS variables
     resetTheme()
+    applyRadius(CLEARED_THEME_CUSTOMIZATION.selectedRadius)
 
-    // 3. Reset the radius to default
-    applyRadius("0.5rem")
-
-    // 4. Reset sidebar to defaults
-    updateSidebarConfig({ variant: "inset", collapsible: "offcanvas", side: "left" })
+    updateSidebarConfig({ ...DEFAULT_THEME_LAYOUT })
   }
 
   const handleImport = (themeData: ImportedTheme) => {
     setImportedTheme(themeData)
-    // Clear other selections to indicate custom import is active
     setSelectedTheme("")
     setSelectedTweakcnTheme("")
-
-    // Apply the imported theme
+    setBrandColors({})
     applyImportedTheme(themeData, isDarkMode)
   }
 
@@ -64,19 +255,16 @@ export function ThemeCustomizer({ open, onOpenChange }: ThemeCustomizerProps) {
     setImportModalOpen(true)
   }
 
-  // Re-apply themes when theme mode changes
-  React.useEffect(() => {
-    if (importedTheme) {
-      applyImportedTheme(importedTheme, isDarkMode)
-    } else if (selectedTheme) {
-      applyTheme(selectedTheme, isDarkMode)
-    } else if (selectedTweakcnTheme) {
-      const selectedPreset = tweakcnThemes.find(t => t.value === selectedTweakcnTheme)?.preset
-      if (selectedPreset) {
-        applyTweakcnTheme(selectedPreset, isDarkMode)
-      }
-    }
-  }, [isDarkMode, importedTheme, selectedTheme, selectedTweakcnTheme, applyImportedTheme, applyTheme, applyTweakcnTheme])
+  const handleBrandColorChange = (cssVar: string, value: string) => {
+    handleColorChange(cssVar, value)
+    setBrandColorsValues((prev) => ({ ...prev, [cssVar]: value }))
+    setBrandColors((prev) => ({ ...prev, [cssVar]: value }))
+  }
+
+  const handleClearBrandColors = () => {
+    setBrandColors({})
+    setBrandColorsValues({})
+  }
 
   return (
     <>
@@ -85,7 +273,6 @@ export function ThemeCustomizer({ open, onOpenChange }: ThemeCustomizerProps) {
           side={sidebarConfig.side === "left" ? "right" : "left"}
           className="w-[400px] p-0 gap-0 pointer-events-auto [&>button]:hidden overflow-hidden flex flex-col"
           onInteractOutside={(e) => {
-            // Prevent the sheet from closing when dialog is open
             if (importModalOpen) {
               e.preventDefault()
             }
@@ -118,10 +305,6 @@ export function ThemeCustomizer({ open, onOpenChange }: ThemeCustomizerProps) {
                   <TabsTrigger value="theme" className="cursor-pointer data-[state=active]:bg-background"><Palette className="h-4 w-4 mr-1" /> Theme</TabsTrigger>
                   <TabsTrigger value="layout" className="cursor-pointer data-[state=active]:bg-background"><Layout className="h-4 w-4 mr-1" /> Layout</TabsTrigger>
                 </TabsList>
-                {/* <TabsList className="grid w-full grid-cols-2 rounded-none h-12 p-1.5">
-                  <TabsTrigger value="theme" className="cursor-pointer data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"><Palette className="h-4 w-4 mr-1" /> Theme</TabsTrigger>
-                  <TabsTrigger value="layout" className="cursor-pointer data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"><Layout className="h-4 w-4 mr-1" /> Layout</TabsTrigger>
-                </TabsList> */}
               </div>
 
               <TabsContent value="theme" className="flex-1 mt-0">
@@ -134,6 +317,13 @@ export function ThemeCustomizer({ open, onOpenChange }: ThemeCustomizerProps) {
                   setSelectedRadius={setSelectedRadius}
                   setImportedTheme={setImportedTheme}
                   onImportClick={handleImportClick}
+                  onBrandColorChange={handleBrandColorChange}
+                  onClearBrandColors={handleClearBrandColors}
+                  brandColorsValues={brandColorsValues}
+                  isDarkMode={isDarkMode}
+                  applyTheme={applyTheme}
+                  applyTweakcnTheme={applyTweakcnTheme}
+                  applyRadius={applyRadius}
                 />
               </TabsContent>
 
@@ -154,7 +344,6 @@ export function ThemeCustomizer({ open, onOpenChange }: ThemeCustomizerProps) {
   )
 }
 
-// Floating trigger button - positioned dynamically based on sidebar side
 export function ThemeCustomizerTrigger({ onClick }: { onClick: () => void }) {
   const { config: sidebarConfig } = useSidebarConfig()
 

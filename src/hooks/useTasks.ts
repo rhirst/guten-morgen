@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
+  DEFAULT_TASK_DAY_TIMEZONE,
+  getTaskDayBoundary,
+} from "@/lib/google-dates";
+import {
   getTaskLists,
   getTasks,
   setTaskCompleted,
@@ -12,7 +16,10 @@ import {
   isSourceEnabled,
 } from "@/services/settings";
 
-export function useTasks(enabledTaskListIds?: string[] | null) {
+export function useTasks(
+  enabledTaskListIds?: string[] | null,
+  taskDayTimezone: string = DEFAULT_TASK_DAY_TIMEZONE
+) {
   const { isAuthorized } = useGoogleAuth();
 
   const [taskLists, setTaskLists] = useState<GoogleTaskList[]>([]);
@@ -37,9 +44,13 @@ export function useTasks(enabledTaskListIds?: string[] | null) {
       setTaskLists(lists);
 
       const visibleLists = filterByEnabledIds(lists, enabledTaskListIds);
+      const completedMin = getTaskDayBoundary(
+        new Date(),
+        taskDayTimezone
+      ).toISOString();
 
       const taskArrays = await Promise.all(
-        visibleLists.map((list) => getTasks(list))
+        visibleLists.map((list) => getTasks(list, completedMin))
       );
 
       setTasks(taskArrays.flat());
@@ -50,7 +61,7 @@ export function useTasks(enabledTaskListIds?: string[] | null) {
     } finally {
       setLoading(false);
     }
-  }, [enabledTaskListIds, isAuthorized]);
+  }, [enabledTaskListIds, isAuthorized, taskDayTimezone]);
 
   useEffect(() => {
     refresh();
