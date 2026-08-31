@@ -17,10 +17,10 @@ export type GoogleTaskList = {
     completed?: string;
   };
   
-  export type GoogleTasksResponse = {
+  export interface GoogleTasksResponse {
     items?: GoogleTask[];
     nextPageToken?: string;
-  };
+  }
   
   export type Task = {
     id: string;
@@ -29,7 +29,7 @@ export type GoogleTaskList = {
     title: string;
     notes?: string;
   
-    due?: Date;
+    due?: string | undefined;
   
     completed: boolean;
   };

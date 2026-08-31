@@ -12,7 +12,7 @@ export function GoogleAuthorizationButton() {
 
   if (isAuthorized) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
         <span className="text-sm text-muted-foreground">
           Google Calendar & Tasks connected
         </span>

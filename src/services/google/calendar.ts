@@ -5,9 +5,9 @@ import type {
   GoogleCalendarListResponse,
   GoogleEventsResponse,
 } from "./calendar.types";
+import { localDateFromDateOnly } from "@/lib/google-dates";
 
-const CALENDAR_API =
-  "https://www.googleapis.com/calendar/v3";
+const CALENDAR_API = "https://www.googleapis.com/calendar/v3";
 
 export async function getCalendars(): Promise<GoogleCalendar[]> {
   const response = await googleFetch<GoogleCalendarListResponse>(
@@ -18,33 +18,31 @@ export async function getCalendars(): Promise<GoogleCalendar[]> {
 }
 
 function normalizeEvent(
-    event: NonNullable<GoogleEventsResponse["items"]>[number],
-    calendar: GoogleCalendar
-  ): CalendarEvent {
+  event: NonNullable<GoogleEventsResponse["items"]>[number],
+  calendar: GoogleCalendar
+): CalendarEvent {
   const allDay = Boolean(event.start.date);
 
   const start = allDay
-    ? new Date(`${event.start.date}T00:00:00`)
+    ? localDateFromDateOnly(event.start.date!)
     : new Date(event.start.dateTime!);
 
+  // All-day end.date is exclusive per Calendar API.
   const end = allDay
-    ? new Date(`${event.end.date}T00:00:00`)
+    ? localDateFromDateOnly(event.end.date!)
     : new Date(event.end.dateTime!);
 
   return {
     id: event.id,
     calendarId: calendar.id,
     calendarName: calendar.summary,
-
     title: event.summary ?? "(No title)",
     description: event.description,
     location: event.location,
-
+    htmlLink: event.htmlLink,
     start,
     end,
-
     allDay,
-
     calendarColor: calendar.backgroundColor,
   };
 }
@@ -60,12 +58,11 @@ export async function getEvents(
     singleEvents: "true",
     orderBy: "startTime",
     maxResults: "250",
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   });
 
   const response = await googleFetch<GoogleEventsResponse>(
-    `${CALENDAR_API}/calendars/${encodeURIComponent(
-      calendar.id
-    )}/events?${params}`
+    `${CALENDAR_API}/calendars/${encodeURIComponent(calendar.id)}/events?${params}`
   );
 
   return (response.items ?? [])

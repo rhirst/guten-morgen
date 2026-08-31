@@ -10,7 +10,8 @@ import {
 
 const GOOGLE_SCOPES = [
   "https://www.googleapis.com/auth/calendar.readonly",
-  "https://www.googleapis.com/auth/tasks.readonly",
+  // Write scope required to mark tasks complete via tasks.patch
+  "https://www.googleapis.com/auth/tasks",
 ].join(" ");
 
 export function useGoogleAuthController() {
@@ -39,13 +40,19 @@ export function useGoogleAuthController() {
       setIsAuthorizing(false);
       setError(new Error("Google authorization failed"));
     },
+
+    onNonOAuthError: () => {
+      setIsAuthorizing(false);
+      setError(new Error("Google authorization was cancelled"));
+    },
   });
 
   const authorize = useCallback(() => {
     setError(null);
     setIsAuthorizing(true);
 
-    login();
+    // prompt: consent so users who previously granted readonly re-approve write
+    login({ prompt: "consent" });
   }, [login]);
 
   const disconnect = useCallback(() => {
