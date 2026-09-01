@@ -6,6 +6,7 @@ import { useGoogleAuth } from "@/providers/GoogleAuthProvider"
 import { LiveClock } from "@/app/dashboard/components/live-clock"
 import { TasksCard } from "@/app/dashboard/components/tasks-card"
 import { WeatherCard } from "@/app/dashboard/components/weather-card"
+import { BusTimesCard } from "@/app/dashboard/components/bus-times-card"
 import { WeekAgenda } from "@/app/dashboard/components/week-agenda"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { DEFAULT_TASK_DAY_TIMEZONE } from "@/lib/google-dates"
@@ -46,7 +47,7 @@ export default function Page() {
               </div>
               <LiveClock clockFormat={settings?.clock_format ?? "12h"} />
             </div>
-            <div className="flex w-full flex-col gap-4 sm:max-w-sm">
+            <div className="flex w-full flex-col gap-4 sm:max-w-md">
               <WeatherCard temperatureUnit={settings?.temperature_unit} />
             </div>
           </header>
@@ -73,11 +74,19 @@ export default function Page() {
           </div>
         </div>
 
-        {hasAlbum && (
-          <div className="h-full w-[30%] shrink-0 min-h-0">
-            <SmartDisplayPhotos />
-          </div>
-        )}
+        <div
+          className={cn(
+            "flex h-full min-h-0 shrink-0 flex-col gap-4",
+            hasAlbum ? "w-[30%]" : "w-full max-w-sm"
+          )}
+        >
+          <BusTimesCard />
+          {hasAlbum && (
+            <div className="min-h-0 flex-1">
+              <SmartDisplayPhotos />
+            </div>
+          )}
+        </div>
       </div>
     </BaseLayout>
   )
