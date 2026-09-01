@@ -162,7 +162,7 @@ export function TasksCard({
                 key={list.id}
                 className="min-w-[220px] flex-1 space-y-3 rounded-lg border bg-muted/20 p-3"
               >
-                <h3 className="truncate text-sm font-semibold">{list.title}</h3>
+                <h3 className="truncate text-base font-semibold">{list.title}</h3>
                 {listTasks.length === 0 ? (
                   <p className="text-xs text-muted-foreground">No tasks today</p>
                 ) : (
@@ -190,8 +190,8 @@ export function TasksCard({
                             <p
                               className={
                                 task.completed
-                                  ? "text-sm font-medium leading-tight text-muted-foreground line-through"
-                                  : "text-sm font-medium leading-tight"
+                                  ? "text-base font-medium leading-tight text-muted-foreground line-through"
+                                  : "text-base font-medium leading-tight"
                               }
                             >
                               {task.title}
