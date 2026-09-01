@@ -18,15 +18,48 @@ export type CtaBusPredictions = {
   routes: CtaBusRoute[];
 };
 
-export function formatArrivalCountdown(prdctdn: string): string {
+const CHICAGO_TIME_ZONE = "America/Chicago";
+
+export function isChicagoDaytimePollWindow(date: Date = new Date()): boolean {
+  const hour = Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: CHICAGO_TIME_ZONE,
+      hour: "numeric",
+      hourCycle: "h23",
+    }).format(date)
+  );
+  return hour >= 8 && hour < 22;
+}
+
+export function formatArrivalCountdown(
+  prdctdn: string,
+  lastFetchedAt?: number,
+  now: number = Date.now()
+): string {
   const value = prdctdn.trim().toUpperCase();
-  if (!value || value === "DUE" || value === "0" || value === "1") {
+  if (!value || value === "DUE") {
     return "DUE";
   }
   if (value === "DLY") {
     return "Delayed";
   }
-  return `${value} min`;
+
+  const reportedMinutes = Number(value);
+  if (!Number.isFinite(reportedMinutes)) {
+    return `${value} min`;
+  }
+
+  const elapsedMinutes =
+    lastFetchedAt === undefined
+      ? 0
+      : Math.max(0, Math.floor((now - lastFetchedAt) / 60_000));
+  const remainingMinutes = Math.max(0, reportedMinutes - elapsedMinutes);
+
+  if (remainingMinutes <= 1) {
+    return "DUE";
+  }
+
+  return `${remainingMinutes} min`;
 }
 
 export async function getCtaBusPredictions(): Promise<CtaBusPredictions> {

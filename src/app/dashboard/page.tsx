@@ -32,7 +32,7 @@ export default function Page() {
 
   return (
     <BaseLayout hideFooter fillViewport>
-      <div className="flex h-full min-h-0 w-full flex-1 flex-row gap-2 overflow-hidden px-4 pb-2">
+      <div className="flex h-full min-h-0 w-full flex-1 flex-row gap-4 overflow-hidden px-4 pb-2">
         <div
           className={cn(
             "flex min-h-0 min-w-0 flex-1 flex-col gap-4",
@@ -40,15 +40,18 @@ export default function Page() {
           )}
         >
           <header className="flex shrink-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <SidebarTrigger />
                 <p className="text-sm text-muted-foreground">{dateLabel}</p>
               </div>
               <LiveClock clockFormat={settings?.clock_format ?? "12h"} />
             </div>
-            <div className="flex w-full flex-col gap-4 sm:max-w-md">
-              <WeatherCard temperatureUnit={settings?.temperature_unit} />
+            <div className="flex w-full flex-col gap-4 sm:max-w-lg">
+              <WeatherCard
+                temperatureUnit={settings?.temperature_unit}
+                clockFormat={settings?.clock_format ?? "12h"}
+              />
             </div>
           </header>
 
@@ -80,12 +83,12 @@ export default function Page() {
             hasAlbum ? "w-[30%]" : "w-full max-w-sm"
           )}
         >
-          <BusTimesCard />
           {hasAlbum && (
             <div className="min-h-0 flex-1">
               <SmartDisplayPhotos />
             </div>
           )}
+          <BusTimesCard />
         </div>
       </div>
     </BaseLayout>

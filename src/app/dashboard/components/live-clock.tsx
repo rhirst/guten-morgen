@@ -19,7 +19,7 @@ export function LiveClock({ clockFormat }: { clockFormat: string }) {
   }, []);
 
   return (
-    <p className="text-5xl font-semibold tabular-nums tracking-tight">
+    <p className="text-7xl font-semibold tabular-nums tracking-tight pb-0 vertical-align-bottom -mb-2">
       {formatClock(now, clockFormat)}
     </p>
   );

@@ -269,8 +269,7 @@ export function WeekAgenda({
                   <div
                     key={day.toISOString()}
                     className={cn(
-                      "flex w-[calc((75%-2rem)/5)] shrink-0 snap-start flex-col rounded-lg border p-2",
-                      "xl:w-[calc((100%-3rem)/7)]",
+                      "flex w-[calc((100%-2rem)/5)] shrink-0 snap-start flex-col rounded-lg border p-2",
                       isToday && "border-primary/40 bg-primary/5"
                     )}
                   >
@@ -293,7 +292,7 @@ export function WeekAgenda({
                       </p>
                     </div>
 
-                    <div className="flex min-h-20 flex-1 flex-col gap-1.5">
+                    <div className="flex min-h-16 flex-1 flex-col gap-1.5">
                       {dayEvents.length === 0 ? (
                         <p className="px-0.5 text-xs text-muted-foreground">
                           —
