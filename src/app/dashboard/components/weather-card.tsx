@@ -1,10 +1,8 @@
 import { useMemo, useState } from "react";
-import { CloudSun, RefreshCw, CloudRainIcon, DropletIcon, Sun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning, CloudRainWind } from "lucide-react";
+import { CloudSun, RefreshCw, CloudRainIcon, Sun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning, CloudRainWind } from "lucide-react";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {

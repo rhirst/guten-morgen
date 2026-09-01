@@ -29,6 +29,7 @@ import {
 } from "@/lib/google-dates";
 import type { CalendarEvent } from "@/services/google/calendar.types";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 function formatEventTime(event: CalendarEvent) {
   if (event.allDay) {
@@ -270,14 +271,14 @@ export function WeekAgenda({
                     key={day.toISOString()}
                     className={cn(
                       "flex w-[calc((100%-2rem)/5)] shrink-0 snap-start flex-col rounded-lg border p-2",
-                      isToday && "border-primary/40 bg-primary/5"
+                      isToday && "border-primary"
                     )}
                   >
                     <div className="mb-2 space-y-0.5 px-0.5">
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground flex items-center justify-between">
                         {new Intl.DateTimeFormat(undefined, {
                           weekday: "short",
-                        }).format(day)}
+                        }).format(day)} {isToday && <Badge variant="outline" className="text-primary border-primary">Today</Badge>}
                       </p>
                       <p
                         className={cn(
